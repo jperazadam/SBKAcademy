@@ -41,5 +41,6 @@ backend/     → Express API (puerto 3000 en desarrollo)
 - **Fase 3:** Portal del alumno + multi-profesor
 
 ## Equipo de Agentes
-- `frontend-agent` → especialista en React, Vite, UI/UX
-- `backend-agent` → especialista en Express, Prisma, PostgreSQL
+- `frontend-agent` → especialista en React, Vite, UI/UX (model: sonnet)
+- `backend-agent` → especialista en Express, Prisma, PostgreSQL (model: sonnet)
+- `research-agent` → busca documentación y compara aproximaciones técnicas (model: sonnet)
