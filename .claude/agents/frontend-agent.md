@@ -1,7 +1,7 @@
 ---
 name: frontend-agent
 description: Especialista en React + Vite + TypeScript para SBKAcademy. Úsame para implementar componentes, páginas, estilos, routing y gestión de estado. También para consultar documentación de librerías frontend.
-model: inherit
+model: sonnet
 tools: Read, Edit, Write, Glob, Grep, Bash, WebSearch
 ---
 

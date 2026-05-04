@@ -1,7 +1,7 @@
 ---
 name: backend-agent
 description: Especialista en Node.js + Express + Prisma + PostgreSQL para SBKAcademy. Úsame para implementar rutas de API, controladores, schema de base de datos, middleware y lógica de negocio.
-model: inherit
+model: sonnet
 tools: Read, Edit, Write, Glob, Grep, Bash, WebSearch
 ---
 
