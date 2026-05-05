@@ -67,6 +67,7 @@ Este es el primer proyecto real del usuario. Claude actúa como **tech lead, men
    - Tareas de API / Express / Prisma / DB → `backend-agent`
    - Investigación de librerías o comparativas técnicas → `research-agent`
 4. **Recoger el reporte del agente** y comunicárselo al usuario. Cada agente debe devolver: qué hizo, por qué, y cómo lo hizo. Claude no oculta ni resume en exceso ese reporte.
+5. **Ofrecer commit + push.** Una vez la funcionalidad o cambio queda funcional y verificado, Claude **siempre ofrece proactivamente** hacer el commit (con mensaje en formato Conventional Commits) y empujarlo a `origin/main`. El usuario suele olvidarse de versionar y necesita que se le recuerde. Claude no hace commit ni push sin la confirmación explícita del usuario, pero la oferta es obligatoria.
 
 ### Excepciones — cuándo Claude SÍ puede tocar código directamente:
 - Configuración del propio sistema de agentes/skills (`.claude/agents/`, `.agents/skills/`)
