@@ -1,0 +1,35 @@
+@import "tailwindcss";
+@import "./styles/theme.css";
+
+body {
+  font-family: sans-serif;
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+/* ── Dashboard ── */
+
+.dashboard-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.logout-button {
+  background-color: #1a1a2e;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.625rem 1.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.logout-button:hover {
+  background-color: #2d2d4e;
+}

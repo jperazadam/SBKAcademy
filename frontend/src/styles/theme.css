@@ -1,0 +1,48 @@
+/*
+  Paleta de colores SBKAcademy — Tailwind v4
+  Definida con la directiva @theme para que Tailwind
+  genere utilidades como bg-primary-600, text-accent-500, etc.
+
+  Estrategia de gradaciones:
+  - primary (índigo profundo): #1E1B4B es el ancla en 600.
+    Del 50 al 500 se aclara progresivamente; del 700 al 900 se oscurece.
+  - accent (rosa intenso): #E11D48 es el ancla en 600.
+    Misma lógica: claro hacia 50, muy oscuro en 900.
+
+  Tokens semánticos:
+  - background: blanco roto de la paleta base
+  - foreground: antracita de la paleta base
+  Separados de las escalas primary/accent porque son colores
+  "neutros de sistema", no variantes cromáticas del tema.
+  Usarlos evita valores arbitrarios (text-[#111827]) en los componentes.
+*/
+
+@theme {
+  /* ── Primary: Índigo profundo ── */
+  --color-primary-50:  #eeecf8;
+  --color-primary-100: #d5d2ef;
+  --color-primary-200: #b0aae3;
+  --color-primary-300: #8b82d6;
+  --color-primary-400: #6659c8;
+  --color-primary-500: #3d3693;
+  --color-primary-600: #1E1B4B;   /* color base del diseño */
+  --color-primary-700: #181539;
+  --color-primary-800: #120f28;
+  --color-primary-900: #0b0a18;
+
+  /* ── Accent: Rosa intenso ── */
+  --color-accent-50:  #fff0f3;
+  --color-accent-100: #ffd6de;
+  --color-accent-200: #ffadbf;
+  --color-accent-300: #ff7a99;
+  --color-accent-400: #f44771;
+  --color-accent-500: #eb2d5c;
+  --color-accent-600: #E11D48;    /* color base del diseño */
+  --color-accent-700: #b9153a;
+  --color-accent-800: #8f0e2b;
+  --color-accent-900: #5f081c;
+
+  /* ── Tokens semánticos de sistema ── */
+  --color-background: #F9FAFB;   /* blanco roto — fondo de la app */
+  --color-foreground: #111827;   /* antracita — texto principal */
+}
