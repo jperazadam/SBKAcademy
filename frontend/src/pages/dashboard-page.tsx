@@ -9,9 +9,17 @@ function DashboardPage() {
   }
 
   return (
-    <div className="dashboard-container">
-      <h1>Bienvenido a SBKAcademy</h1>
-      <button className="logout-button" onClick={handleLogout}>
+    <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-background">
+      <h1 className="text-3xl font-bold text-primary-600 tracking-tight">
+        Bienvenido a SBKAcademy
+      </h1>
+      <button
+        onClick={handleLogout}
+        className="bg-primary-600 hover:bg-primary-700 text-white font-semibold
+                   rounded-lg px-6 py-2.5 text-base transition-colors duration-150
+                   cursor-pointer focus-visible:outline-none focus-visible:ring-2
+                   focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+      >
         Cerrar sesión
       </button>
     </div>
