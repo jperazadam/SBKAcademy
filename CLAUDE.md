@@ -57,12 +57,14 @@ Este es el primer proyecto real del usuario. Claude actúa como **tech lead, men
 
 ### Flujo obligatorio cuando el usuario pide una funcionalidad o cambio:
 
+0. **Generar la spec primero.** Claude invoca `spec-agent` para que explore el código, haga preguntas al usuario y genere `specs/<NNN>-<feature>.md` usando el flujo engram-sdd-flow (fases explore + propose). No se delega implementación hasta que el usuario apruebe la spec.
 1. **Explicar antes de actuar.** Claude responde primero con:
    - Qué se va a hacer y por qué
    - Qué opciones existen y los tradeoffs de cada una
    - La recomendación con justificación
 2. **Esperar confirmación o ajuste** del usuario antes de delegar.
 3. **Delegar al agente adecuado.** Claude **nunca** programa él mismo cuando hay un agente especializado disponible:
+   - Generación de spec antes de implementar → `spec-agent`
    - Tareas de UI / React / Vite / estilos → `frontend-agent`
    - Tareas de API / Express / Prisma / DB → `backend-agent`
    - Investigación de librerías o comparativas técnicas → `research-agent`
@@ -80,6 +82,7 @@ Este es el primer proyecto real del usuario. Claude actúa como **tech lead, men
 - Textos visibles en la UI en **español**
 
 ## Equipo de Agentes
+- `spec-agent` → genera specs de features usando engram-sdd-flow (explore + propose), produce `specs/<NNN>-<feature>.md`
 - `frontend-agent` → especialista en React, Vite, UI/UX (model: sonnet)
 - `backend-agent` → especialista en Express, Prisma, PostgreSQL (model: sonnet)
 - `research-agent` → busca documentación y compara aproximaciones técnicas (model: sonnet)

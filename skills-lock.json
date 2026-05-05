@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "engram-sdd-flow": {
+      "source": "gentleman-programming/engram",
+      "sourceType": "github",
+      "skillPath": "skills/sdd-flow/SKILL.md",
+      "computedHash": "eb49b12864ae078c586d4fea510ebac0a869c5b805a9b41e570246ad149c03db"
+    },
     "find-skills": {
       "source": "vercel-labs/skills",
       "sourceType": "github",
