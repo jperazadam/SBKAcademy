@@ -1,73 +1,40 @@
-# React + TypeScript + Vite
+# SBKAcademy Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Stack
 
-Currently, two official plugins are available:
+- **React 19** + Vite + TypeScript
+- **Tailwind CSS v4** via `@tailwindcss/vite`
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Scripts
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev      # Start Vite dev server (puerto 5173)
+npm run build    # Build for production
+npm run lint     # Run ESLint
+npm run test     # Run Vitest unit/component tests
+npm run test:watch  # Run Vitest in watch mode
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Testing
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Tests run with **Vitest** + **React Testing Library** + **jsdom**.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Test files live alongside components: `src/components/SomeComponent.test.tsx`
+- Setup: `src/test/setup.ts` (imports jest-dom matchers)
+- Run from `frontend/` directory
+
+### Scope
+
+- ✅ Unit and component tests
+- ✅ DOM queries and jest-dom assertions
+- ❌ E2E / Playwright (deferred to future work)
+- ❌ Browser-mode / real-browser tests
+
+## Desarrollo
+
+```bash
+npm install
+npm run dev
 ```
+
+Abrir http://localhost:5173

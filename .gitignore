@@ -31,3 +31,6 @@ Thumbs.db
 # Skills instaladas por npx skills (recreables desde skills-lock.json)
 .agents/skills/
 .claude/skills/
+
+# Agent Teams Lite local registry
+.atl/

@@ -4,7 +4,7 @@
 Aplicación web para gestionar alumnos, asistencia y pagos en clases de bachata.
 
 ## Stack Tecnológico
-- **Frontend:** React 18 + Vite + TypeScript
+- **Frontend:** React 19 + Vite + TypeScript
 - **Backend:** Node.js + Express + TypeScript
 - **Base de datos:** PostgreSQL + Prisma ORM
 - **Deploy:** Vercel (frontend) + Railway (backend + DB)
