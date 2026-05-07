@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import authRouter from './routes/auth-router'
+import studentsRouter from './routes/students-router'
 
 const app = express()
 
@@ -14,5 +15,8 @@ app.get('/health', (_req, res) => {
 
 // All auth endpoints are mounted under /auth
 app.use('/auth', authRouter)
+
+// Student CRUD — requires JWT authentication
+app.use('/students', studentsRouter)
 
 export default app
