@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor, fireEvent, cleanup } from '@testing-library/react'
 import React from 'react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import StudentsPage from '../pages/students-page'
 
 const { listStudents, deactivateStudent } = vi.hoisted(() => ({
@@ -41,6 +41,11 @@ const mockStudents = [
 
 function renderWithRouter(ui: React.ReactElement) {
   return render(<MemoryRouter>{ui}</MemoryRouter>)
+}
+
+function LocationDisplay() {
+  const location = useLocation()
+  return <span data-testid="current-path">{location.pathname}</span>
 }
 
 function resetServiceMocks() {
@@ -167,17 +172,18 @@ describe('StudentsPage', () => {
   })
 
   it('navigates to edit page when edit button is clicked', async () => {
-    // Spy on useNavigate
-    const navigate = vi.fn()
-    vi.spyOn(require('react-router-dom'), 'useNavigate').mockReturnValue(navigate)
-
     listStudents.mockResolvedValue([...mockStudents])
-    renderWithRouter(<StudentsPage />)
+    renderWithRouter(
+      <>
+        <StudentsPage />
+        <LocationDisplay />
+      </>,
+    )
     await waitFor(() => screen.getByText('Pedro García'))
 
     const editBtn = screen.getAllByRole('button', { name: 'Editar' })[0]
     fireEvent.click(editBtn)
 
-    expect(navigate).toHaveBeenCalledWith('/dashboard/students/1/edit')
+    expect(screen.getByTestId('current-path')).toHaveTextContent('/dashboard/students/1/edit')
   })
 })
