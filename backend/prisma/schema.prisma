@@ -14,6 +14,7 @@ model User {
   name      String
   createdAt DateTime  @default(now())
   students  Student[]
+  danceClasses DanceClass[]
 }
 
 model Student {
@@ -27,4 +28,42 @@ model Student {
   updatedAt DateTime @updatedAt
   teacherId Int
   teacher   User     @relation(fields: [teacherId], references: [id])
+}
+
+// ---------------------------------------------------------------------------
+// Dance Class models
+// ---------------------------------------------------------------------------
+
+enum DanceType {
+  SALSA
+  BACHATA
+  KIZOMBA
+}
+
+enum DanceLevel {
+  INICIO
+  MEDIO
+  AVANZADO
+}
+
+model DanceClass {
+  id        Int       @id @default(autoincrement())
+  name      String?
+  type      DanceType
+  level     DanceLevel
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  teacherId Int
+  teacher   User      @relation(fields: [teacherId], references: [id])
+  schedules ClassScheduleEntry[]
+}
+
+model ClassScheduleEntry {
+  id         Int       @id @default(autoincrement())
+  dayOfWeek  Int       // 0 = Sunday, 1 = Monday, ... 6 = Saturday
+  startTime  String    @db.VarChar(5)  // "HH:mm" format
+  endTime    String    @db.VarChar(5)  // "HH:mm" format
+  classId    Int
+  class      DanceClass @relation(fields: [classId], references: [id], onDelete: Cascade)
 }

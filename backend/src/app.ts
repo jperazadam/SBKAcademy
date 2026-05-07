@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import authRouter from './routes/auth-router'
 import studentsRouter from './routes/students-router'
+import classesRouter from './routes/classes-router'
 
 const app = express()
 
@@ -18,5 +19,8 @@ app.use('/auth', authRouter)
 
 // Student CRUD — requires JWT authentication
 app.use('/students', studentsRouter)
+
+// Class CRUD — requires JWT authentication
+app.use('/classes', classesRouter)
 
 export default app

@@ -3,6 +3,8 @@ import LoginPage from './pages/login-page'
 import DashboardPage from './pages/dashboard-page'
 import StudentsPage from './pages/students-page'
 import StudentFormPage from './pages/student-form-page'
+import ClassesPage from './pages/classes-page'
+import ClassFormPage from './pages/class-form-page'
 import PrivateRoute from './components/private-route'
 
 function App() {
@@ -39,6 +41,30 @@ function App() {
           element={
             <PrivateRoute>
               <StudentFormPage mode="edit" />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/dashboard/classes"
+          element={
+            <PrivateRoute>
+              <ClassesPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/dashboard/classes/new"
+          element={
+            <PrivateRoute>
+              <ClassFormPage mode="create" />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/dashboard/classes/:classId/edit"
+          element={
+            <PrivateRoute>
+              <ClassFormPage mode="edit" />
             </PrivateRoute>
           }
         />

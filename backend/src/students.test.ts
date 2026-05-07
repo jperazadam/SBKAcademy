@@ -14,6 +14,12 @@ const prisma = new PrismaClient()
 let teacherA: { id: number; token: string }
 let teacherB: { id: number; token: string }
 
+// Unique email suffix per test process — prevents collisions when this file
+// runs in parallel with other test files against the same database, and avoids
+// stale-row collisions across consecutive runs that may have failed mid-cleanup.
+const RUN_ID = `${Date.now()}-${Math.floor(Math.random() * 1e9)}`
+const EMAIL_SUFFIX = `@students-${RUN_ID}.test.local`
+
 function makeToken(user: { id: number; email: string; name: string }): string {
   return jwt.sign(
     { id: user.id, email: user.email, name: user.name },
@@ -22,22 +28,39 @@ function makeToken(user: { id: number; email: string; name: string }): string {
   )
 }
 
+// Scoped cleanup — only touches rows owned by teachers created in THIS file.
+// Order respects FK dependencies: schedules → classes → students → users.
+// Never uses unscoped deleteMany, which would race with other test files
+// that share the same database.
+async function cleanupOwnRows() {
+  await prisma.classScheduleEntry.deleteMany({
+    where: { class: { teacher: { email: { endsWith: EMAIL_SUFFIX } } } },
+  })
+  await prisma.danceClass.deleteMany({
+    where: { teacher: { email: { endsWith: EMAIL_SUFFIX } } },
+  })
+  await prisma.student.deleteMany({
+    where: { teacher: { email: { endsWith: EMAIL_SUFFIX } } },
+  })
+  await prisma.user.deleteMany({
+    where: { email: { endsWith: EMAIL_SUFFIX } },
+  })
+}
+
 // ---------------------------------------------------------------------------
 // Seed database before running tests
 // ---------------------------------------------------------------------------
 
 beforeAll(async () => {
-  // Ensure clean slate
-  await prisma.student.deleteMany({ where: {} })
-  await prisma.user.deleteMany({ where: {} })
+  await cleanupOwnRows()
 
   const passwordHash = await bcrypt.hash('password123', 10)
 
   const userA = await prisma.user.create({
-    data: { email: 'teacher-a@test.com', password: passwordHash, name: 'Teacher A' },
+    data: { email: `teacher-a${EMAIL_SUFFIX}`, password: passwordHash, name: 'Teacher A (students)' },
   })
   const userB = await prisma.user.create({
-    data: { email: 'teacher-b@test.com', password: passwordHash, name: 'Teacher B' },
+    data: { email: `teacher-b${EMAIL_SUFFIX}`, password: passwordHash, name: 'Teacher B (students)' },
   })
 
   teacherA = { id: userA.id, token: makeToken(userA) }
@@ -45,8 +68,7 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  await prisma.student.deleteMany({ where: {} })
-  await prisma.user.deleteMany({ where: {} })
+  await cleanupOwnRows()
   await prisma.$disconnect()
 })
 

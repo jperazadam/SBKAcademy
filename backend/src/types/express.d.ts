@@ -1,14 +1,20 @@
 // Augment Express's Request type so every route can access req.user
 // after the requireAuth middleware has validated the JWT.
-// This file is picked up automatically by TypeScript because it is
-// inside the project's rootDir ("src").
+//
+// The `export {}` keeps this file as a module, and `declare global`
+// makes the Express namespace augmentation reliable for ts-node-dev,
+// tsc, and Vitest.
 
-declare namespace Express {
-  interface Request {
-    user?: {
-      id: number
-      email: string
-      name: string
+export {}
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: number
+        email: string
+        name: string
+      }
     }
   }
 }

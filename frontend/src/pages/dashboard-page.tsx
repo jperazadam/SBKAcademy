@@ -24,6 +24,15 @@ function DashboardPage() {
           Alumnos
         </button>
         <button
+          onClick={() => navigate('/dashboard/classes')}
+          className="bg-primary-600 hover:bg-primary-700 text-white font-semibold
+                     rounded-lg px-6 py-2.5 text-base transition-colors duration-150
+                     cursor-pointer focus-visible:outline-none focus-visible:ring-2
+                     focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+        >
+          Clases
+        </button>
+        <button
           onClick={handleLogout}
           className="bg-gray-600 hover:bg-gray-700 text-white font-semibold
                      rounded-lg px-6 py-2.5 text-base transition-colors duration-150
