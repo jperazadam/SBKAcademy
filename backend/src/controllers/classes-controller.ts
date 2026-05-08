@@ -24,16 +24,16 @@ const LEVEL_LABELS: Record<DanceLevel, string> = {
 // ---------------------------------------------------------------------------
 
 interface ScheduleInput {
-  dayOfWeek: unknown
-  startTime: unknown
-  endTime: unknown
+  dayOfWeek: number
+  startTime: string
+  endTime: string
 }
 
 interface ClassInput {
-  name?: unknown
-  type: unknown
-  level: unknown
-  schedules: unknown
+  name: string | null
+  type: DanceType
+  level: DanceLevel
+  schedules: ScheduleInput[]
 }
 
 function isValidTimeFormat(time: string): boolean {
@@ -76,7 +76,7 @@ function parseScheduleEntry(raw: unknown, index: number): ScheduleInput {
   }
 }
 
-function parseClassInput(body: unknown): ClassInput & { schedules: ScheduleInput[] } {
+function parseClassInput(body: unknown): ClassInput {
   if (typeof body !== 'object' || body === null) throw new Error('request body must be an object')
   const b = body as Record<string, unknown>
 
@@ -100,7 +100,7 @@ function parseClassInput(body: unknown): ClassInput & { schedules: ScheduleInput
 
   const schedules = schedulesRaw.map((s, i) => parseScheduleEntry(s, i))
 
-  return { name, type, level, schedules }
+  return { name, type: type as DanceType, level: level as DanceLevel, schedules }
 }
 
 // ---------------------------------------------------------------------------
@@ -194,8 +194,8 @@ export async function createClass(req: Request, res: Response): Promise<void> {
     const cls = await prisma.danceClass.create({
       data: {
         name,
-        type: type as DanceType,
-        level: level as DanceLevel,
+        type,
+        level,
         teacherId,
         schedules: {
           create: schedules.map(s => ({
@@ -260,8 +260,8 @@ export async function updateClass(req: Request, res: Response): Promise<void> {
         where: { id: classId },
         data: {
           name,
-          type: type as DanceType,
-          level: level as DanceLevel,
+          type,
+          level,
           schedules: {
             create: schedules.map(s => ({
               dayOfWeek: s.dayOfWeek,
