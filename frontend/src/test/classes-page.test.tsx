@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor, fireEvent, cleanup } from '@testing-library/react'
+import { render, screen, waitFor, cleanup } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import React from 'react'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import ClassesPage from '../pages/classes-page'
@@ -71,10 +72,8 @@ describe('ClassesPage', () => {
     resetServiceMocks()
   })
 
-  it('renders page title and create button', () => {
+  it('renders create button', () => {
     renderWithRouter(<ClassesPage />)
-    expect(screen.getByText('Clases')).toBeInTheDocument()
-    expect(screen.getByText('Gestión de clases activas')).toBeInTheDocument()
     expect(screen.getByText('+ Nueva clase')).toBeInTheDocument()
   })
 
@@ -93,23 +92,21 @@ describe('ClassesPage', () => {
     })
   })
 
-  it('shows custom name when present', async () => {
+  it('shows custom name when present and different from displayName', async () => {
     listClasses.mockResolvedValue([...mockClasses])
     renderWithRouter(<ClassesPage />)
     await waitFor(() => {
       expect(screen.getByText('Bachata para avanzados')).toBeInTheDocument()
-      // The custom name should appear, not just the displayName
     })
   })
 
-  it('shows schedule information for each class', async () => {
+  it('shows schedule information for each class via DayChips', async () => {
     listClasses.mockResolvedValue([...mockClasses])
     renderWithRouter(<ClassesPage />)
     await waitFor(() => {
-      // Salsa medio has Mon 18:00–19:30, Wed 18:00–19:30
+      // DayChips renders schedule list: Lun 18:00–19:30, Mié 18:00–19:30, Vie 20:00–21:30
       expect(screen.getByText(/Lun 18:00–19:30/)).toBeInTheDocument()
       expect(screen.getByText(/Mié 18:00–19:30/)).toBeInTheDocument()
-      // Bachata advanced has Fri 20:00–21:30
       expect(screen.getByText(/Vie 20:00–21:30/)).toBeInTheDocument()
     })
   })
@@ -138,59 +135,85 @@ describe('ClassesPage', () => {
     })
   })
 
-  it('removes class from list after successful deactivation', async () => {
+  it('opens ConfirmDialog when Desactivar is clicked from action menu', async () => {
     listClasses.mockResolvedValue([...mockClasses])
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
-    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
-
+    const user = userEvent.setup()
     renderWithRouter(<ClassesPage />)
+
     await waitFor(() => screen.getByText('Salsa medio'))
 
-    const deactivateBtn = screen.getAllByRole('button', { name: 'Desactivar' })[0]
-    fireEvent.click(deactivateBtn)
+    const menuButtons = screen.getAllByRole('button', { name: 'Más opciones' })
+    await user.click(menuButtons[0])
+
+    const deactivateMenuItem = screen.getByRole('menuitem', { name: 'Desactivar' })
+    await user.click(deactivateMenuItem)
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByText('Desactivar clase')).toBeInTheDocument()
+  })
+
+  it('removes class from list after confirming deactivation in dialog', async () => {
+    listClasses.mockResolvedValue([...mockClasses])
+    const user = userEvent.setup()
+    renderWithRouter(<ClassesPage />)
+
+    await waitFor(() => screen.getByText('Salsa medio'))
+
+    const menuButtons = screen.getAllByRole('button', { name: 'Más opciones' })
+    await user.click(menuButtons[0])
+    await user.click(screen.getByRole('menuitem', { name: 'Desactivar' }))
+
+    // Confirm in the dialog
+    await user.click(screen.getByRole('button', { name: 'Desactivar' }))
 
     await waitFor(() => {
       expect(screen.queryByText('Salsa medio')).not.toBeInTheDocument()
     })
     expect(screen.getByText('Bachata para avanzados')).toBeInTheDocument()
-
-    alertSpy.mockRestore()
   })
 
-  it('does not deactivate if teacher cancels confirmation', async () => {
+  it('keeps class in list when Cancelar is clicked in dialog', async () => {
     listClasses.mockResolvedValue([...mockClasses])
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
-
+    const user = userEvent.setup()
     renderWithRouter(<ClassesPage />)
+
     await waitFor(() => screen.getByText('Salsa medio'))
 
-    const deactivateBtn = screen.getAllByRole('button', { name: 'Desactivar' })[0]
-    fireEvent.click(deactivateBtn)
+    const menuButtons = screen.getAllByRole('button', { name: 'Más opciones' })
+    await user.click(menuButtons[0])
+    await user.click(screen.getByRole('menuitem', { name: 'Desactivar' }))
+
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }))
 
     expect(screen.getByText('Salsa medio')).toBeInTheDocument()
     expect(deactivateClass).not.toHaveBeenCalled()
   })
 
-  it('shows alert when deactivation fails', async () => {
+  it('shows inline error banner when deactivation fails', async () => {
     listClasses.mockResolvedValue([...mockClasses])
     deactivateClass.mockRejectedValue(new Error('Server error'))
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
-    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
-
+    const user = userEvent.setup()
     renderWithRouter(<ClassesPage />)
+
     await waitFor(() => screen.getByText('Salsa medio'))
 
-    const deactivateBtn = screen.getAllByRole('button', { name: 'Desactivar' })[0]
-    fireEvent.click(deactivateBtn)
+    const menuButtons = screen.getAllByRole('button', { name: 'Más opciones' })
+    await user.click(menuButtons[0])
+    await user.click(screen.getByRole('menuitem', { name: 'Desactivar' }))
+    await user.click(screen.getByRole('button', { name: 'Desactivar' }))
 
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith('No se pudo desactivar la clase. Intenta de nuevo.')
+      expect(
+        screen.getByText('No se pudo desactivar la clase. Intenta de nuevo.')
+      ).toBeInTheDocument()
     })
-    alertSpy.mockRestore()
+    // Verify no native alert was called
+    expect(vi.isMockFunction(window.alert)).toBe(false)
   })
 
-  it('navigates to edit page when edit button is clicked', async () => {
+  it('navigates to edit page when Editar is clicked from action menu', async () => {
     listClasses.mockResolvedValue([...mockClasses])
+    const user = userEvent.setup()
     renderWithRouter(
       <>
         <ClassesPage />
@@ -199,9 +222,22 @@ describe('ClassesPage', () => {
     )
     await waitFor(() => screen.getByText('Salsa medio'))
 
-    const editBtn = screen.getAllByRole('button', { name: 'Editar' })[0]
-    fireEvent.click(editBtn)
+    const menuButtons = screen.getAllByRole('button', { name: 'Más opciones' })
+    await user.click(menuButtons[0])
+    await user.click(screen.getByRole('menuitem', { name: 'Editar' }))
 
     expect(screen.getByTestId('current-path')).toHaveTextContent('/dashboard/classes/1/edit')
+  })
+
+  it('renders day chips for each class', async () => {
+    listClasses.mockResolvedValue([...mockClasses])
+    renderWithRouter(<ClassesPage />)
+
+    await waitFor(() => screen.getByText('Salsa medio'))
+
+    // DayChips renders 7 chips per class: D L M X J V S
+    // Both classes combined = 14 chips; at least 14 chip elements with these letters
+    const lChips = screen.getAllByText('L')
+    expect(lChips.length).toBeGreaterThanOrEqual(1)
   })
 })

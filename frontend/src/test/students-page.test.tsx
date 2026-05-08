@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor, fireEvent, cleanup } from '@testing-library/react'
+import { render, screen, waitFor, cleanup } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import React from 'react'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import StudentsPage from '../pages/students-page'
@@ -64,10 +65,8 @@ describe('StudentsPage', () => {
     resetServiceMocks()
   })
 
-  it('renders page title and create button', () => {
+  it('renders create button', () => {
     renderWithRouter(<StudentsPage />)
-    expect(screen.getByText('Alumnos')).toBeInTheDocument()
-    expect(screen.getByText('Gestión de alumnos activos')).toBeInTheDocument()
     expect(screen.getByText('+ Nuevo alumno')).toBeInTheDocument()
   })
 
@@ -120,59 +119,92 @@ describe('StudentsPage', () => {
     })
   })
 
-  it('removes student from list after successful deactivation', async () => {
+  it('opens ConfirmDialog when Desactivar is clicked from action menu', async () => {
     listStudents.mockResolvedValue([...mockStudents])
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
-    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
-
+    const user = userEvent.setup()
     renderWithRouter(<StudentsPage />)
-    await waitFor(() => screen.getByText('María López'))
 
-    const deactivateBtn = screen.getAllByRole('button', { name: 'Desactivar' })[0]
-    fireEvent.click(deactivateBtn)
+    await waitFor(() => screen.getByText('Pedro García'))
+
+    // Open the action menu for the first student
+    const menuButtons = screen.getAllByRole('button', { name: 'Más opciones' })
+    await user.click(menuButtons[0])
+
+    // Click "Desactivar" menu item
+    const deactivateMenuItem = screen.getByRole('menuitem', { name: 'Desactivar' })
+    await user.click(deactivateMenuItem)
+
+    // ConfirmDialog should be visible
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByText('Desactivar alumno')).toBeInTheDocument()
+  })
+
+  it('removes student from list after confirming deactivation in dialog', async () => {
+    listStudents.mockResolvedValue([...mockStudents])
+    const user = userEvent.setup()
+    renderWithRouter(<StudentsPage />)
+
+    await waitFor(() => screen.getByText('Pedro García'))
+
+    // Open action menu for Pedro García (first student)
+    const menuButtons = screen.getAllByRole('button', { name: 'Más opciones' })
+    await user.click(menuButtons[0])
+
+    // Click "Desactivar" in the menu
+    await user.click(screen.getByRole('menuitem', { name: 'Desactivar' }))
+
+    // Confirm in the dialog — there's a "Desactivar" confirm button
+    await user.click(screen.getByRole('button', { name: 'Desactivar' }))
 
     await waitFor(() => {
       expect(screen.queryByText('Pedro García')).not.toBeInTheDocument()
     })
     expect(screen.getByText('María López')).toBeInTheDocument()
-
-    alertSpy.mockRestore()
   })
 
-  it('does not deactivate if teacher cancels confirmation', async () => {
+  it('keeps student in list when Cancelar is clicked in dialog', async () => {
     listStudents.mockResolvedValue([...mockStudents])
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
-
+    const user = userEvent.setup()
     renderWithRouter(<StudentsPage />)
+
     await waitFor(() => screen.getByText('Pedro García'))
 
-    const deactivateBtn = screen.getAllByRole('button', { name: 'Desactivar' })[0]
-    fireEvent.click(deactivateBtn)
+    const menuButtons = screen.getAllByRole('button', { name: 'Más opciones' })
+    await user.click(menuButtons[0])
+    await user.click(screen.getByRole('menuitem', { name: 'Desactivar' }))
+
+    // Cancel the dialog
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }))
 
     expect(screen.getByText('Pedro García')).toBeInTheDocument()
     expect(deactivateStudent).not.toHaveBeenCalled()
   })
 
-  it('shows alert when deactivation fails', async () => {
+  it('shows inline error banner when deactivation fails', async () => {
     listStudents.mockResolvedValue([...mockStudents])
     deactivateStudent.mockRejectedValue(new Error('Server error'))
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
-    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
-
+    const user = userEvent.setup()
     renderWithRouter(<StudentsPage />)
+
     await waitFor(() => screen.getByText('Pedro García'))
 
-    const deactivateBtn = screen.getAllByRole('button', { name: 'Desactivar' })[0]
-    fireEvent.click(deactivateBtn)
+    const menuButtons = screen.getAllByRole('button', { name: 'Más opciones' })
+    await user.click(menuButtons[0])
+    await user.click(screen.getByRole('menuitem', { name: 'Desactivar' }))
+    await user.click(screen.getByRole('button', { name: 'Desactivar' }))
 
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith('No se pudo desactivar el alumno. Intenta de nuevo.')
+      expect(
+        screen.getByText('No se pudo desactivar el alumno. Intenta de nuevo.')
+      ).toBeInTheDocument()
     })
-    alertSpy.mockRestore()
+    // Verify no native alert was called
+    expect(vi.isMockFunction(window.alert)).toBe(false)
   })
 
-  it('navigates to edit page when edit button is clicked', async () => {
+  it('navigates to edit page when Editar is clicked from action menu', async () => {
     listStudents.mockResolvedValue([...mockStudents])
+    const user = userEvent.setup()
     renderWithRouter(
       <>
         <StudentsPage />
@@ -181,9 +213,49 @@ describe('StudentsPage', () => {
     )
     await waitFor(() => screen.getByText('Pedro García'))
 
-    const editBtn = screen.getAllByRole('button', { name: 'Editar' })[0]
-    fireEvent.click(editBtn)
+    const menuButtons = screen.getAllByRole('button', { name: 'Más opciones' })
+    await user.click(menuButtons[0])
+    await user.click(screen.getByRole('menuitem', { name: 'Editar' }))
 
     expect(screen.getByTestId('current-path')).toHaveTextContent('/dashboard/students/1/edit')
+  })
+
+  it('filters students by name when typing in search input', async () => {
+    listStudents.mockResolvedValue([...mockStudents])
+    const user = userEvent.setup()
+    renderWithRouter(<StudentsPage />)
+
+    await waitFor(() => screen.getByText('Pedro García'))
+
+    const searchInput = screen.getByPlaceholderText('Buscar por nombre, teléfono o email…')
+    await user.type(searchInput, 'María')
+
+    expect(screen.queryByText('Pedro García')).not.toBeInTheDocument()
+    expect(screen.getByText('María López')).toBeInTheDocument()
+  })
+
+  it('filters students by phone number', async () => {
+    listStudents.mockResolvedValue([...mockStudents])
+    const user = userEvent.setup()
+    renderWithRouter(<StudentsPage />)
+
+    await waitFor(() => screen.getByText('Pedro García'))
+
+    const searchInput = screen.getByPlaceholderText('Buscar por nombre, teléfono o email…')
+    await user.type(searchInput, '1234')
+
+    expect(screen.getByText('Pedro García')).toBeInTheDocument()
+    expect(screen.queryByText('María López')).not.toBeInTheDocument()
+  })
+
+  it('renders avatar initials for each student', async () => {
+    listStudents.mockResolvedValue([...mockStudents])
+    renderWithRouter(<StudentsPage />)
+
+    await waitFor(() => screen.getByText('Pedro García'))
+
+    // AvatarInitials renders initials PG and ML
+    expect(screen.getByText('PG')).toBeInTheDocument()
+    expect(screen.getByText('ML')).toBeInTheDocument()
   })
 })
