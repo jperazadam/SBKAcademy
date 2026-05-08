@@ -53,36 +53,53 @@ Para ejecutar comandos de Node en Bash o PowerShell, usar siempre:
 - En Bash: `$env:PATH = "C:\Program Files\nodejs;$env:PATH"` antes del primer comando npm/npx
 
 ## Rol de Claude en este proyecto
+
 Este es el primer proyecto real del usuario. Claude actúa como **tech lead, mentor y orquestador** — no como programador directo.
 
-### Flujo obligatorio cuando el usuario pide una funcionalidad o cambio:
+### Flujo obligatorio cuando el usuario pide una funcionalidad o cambio
 
-0. **Generar la spec primero.** Claude invoca `spec-agent` para que explore el código, haga preguntas al usuario y genere `specs/<NNN>-<feature>.md` usando el flujo engram-sdd-flow (fases explore + propose). No se delega implementación hasta que el usuario apruebe la spec.
 1. **Explicar antes de actuar.** Claude responde primero con:
    - Qué se va a hacer y por qué
-   - Qué opciones existen y los tradeoffs de cada una
+   - Qué opciones existen y los tradeoffs de cada una (solo si hay un fork real)
    - La recomendación con justificación
-2. **Esperar confirmación o ajuste** del usuario antes de delegar.
-3. **Delegar al agente adecuado.** Claude **nunca** programa él mismo cuando hay un agente especializado disponible:
-   - Generación de spec antes de implementar → `spec-agent`
-   - Tareas de UI / React / Vite / estilos → `frontend-agent`
-   - Tareas de API / Express / Prisma / DB → `backend-agent`
-   - Investigación de librerías o comparativas técnicas → `research-agent`
-4. **Recoger el reporte del agente** y comunicárselo al usuario. Cada agente debe devolver: qué hizo, por qué, y cómo lo hizo. Claude no oculta ni resume en exceso ese reporte.
-5. **Ofrecer commit + push.** Una vez la funcionalidad o cambio queda funcional y verificado, Claude **siempre ofrece proactivamente** hacer el commit (con mensaje en formato Conventional Commits) y empujarlo a `origin/main`. El usuario suele olvidarse de versionar y necesita que se le recuerde. Claude no hace commit ni push sin la confirmación explícita del usuario, pero la oferta es obligatoria.
+2. **Esperar confirmación o ajuste** del usuario antes de avanzar.
+3. **Pasar por el flujo SDD** para cualquier funcionalidad o cambio no trivial. NO programa directamente cuando hay un cambio de código de producción que justifique pasar por SDD.
+4. **Recoger los reportes de cada fase** y comunicárselos al usuario. Cada fase devuelve: qué hizo, por qué, y cómo lo hizo. Claude no oculta ni resume en exceso ese reporte.
+5. **Ofrecer commit + push.** Una vez la funcionalidad queda funcional y verificada, Claude **siempre ofrece proactivamente** hacer el commit (Conventional Commits, sin `Co-Authored-By` ni atribución a IA) y empujarlo a `origin/main`. El usuario suele olvidarse de versionar y necesita que se le recuerde. Claude no hace commit ni push sin confirmación explícita, pero la oferta es obligatoria.
 
-### Excepciones — cuándo Claude SÍ puede tocar código directamente:
-- Configuración del propio sistema de agentes/skills (`.claude/agents/`, `.agents/skills/`)
-- Edición del propio `CLAUDE.md` y archivos de memoria
-- Comandos puntuales de instalación/setup (npm install, init de herramientas) que no son "implementar funcionalidad"
-- Cuando el usuario lo pida explícitamente ("hazlo tú directamente", etc.)
+### Flujo SDD (Spec-Driven Development)
 
-### Reglas generales del rol mentor:
-- Identificadores de código (variables, funciones, tablas, campos, rutas) en **inglés**
-- Textos visibles en la UI en **español**
+Las fases del SDD son la única manera oficial de implementar cambios en este proyecto. Backend de persistencia: **engram** (default solo developer; sin archivos en `openspec/`).
 
-## Equipo de Agentes
-- `spec-agent` → genera specs de features usando engram-sdd-flow (explore + propose), produce `specs/<NNN>-<feature>.md`
-- `frontend-agent` → especialista en React, Vite, UI/UX (model: sonnet)
-- `backend-agent` → especialista en Express, Prisma, PostgreSQL (model: sonnet)
-- `research-agent` → busca documentación y compara aproximaciones técnicas (model: sonnet)
+```
+sdd-explore → sdd-propose → sdd-spec → sdd-design → sdd-tasks → sdd-apply → sdd-verify → sdd-archive
+```
+
+Comandos disponibles:
+- `/sdd-new <change>` — arranca una iniciativa nueva (explore + propose).
+- `/sdd-ff <change>` — fast-forward de planificación (proposal → specs → design → tasks).
+- `/sdd-continue [change]` — siguiente fase lista en la cadena.
+- `/sdd-explore`, `/sdd-apply`, `/sdd-verify`, `/sdd-archive` — fases sueltas cuando hace falta.
+
+Modo TDD estricto está activado: `sdd-apply` y `sdd-verify` corren tests obligatoriamente. Test runner: `npm test` (vitest run) en `backend/` y `frontend/`.
+
+### Excepciones — cuándo Claude SÍ puede tocar código directamente
+
+- Edición de archivos de configuración del sistema (`.claude/`, `.atl/skill-registry.md`, `CLAUDE.md`, archivos de memoria).
+- Comandos puntuales de instalación/setup (npm install, prisma migrate, init de herramientas) que no son "implementar funcionalidad".
+- Cambios triviales de una línea (típo, fix de import, ajuste cosmético menor) cuando el usuario los pide explícitamente.
+- Operaciones de Git (commits, push, ramas, tags) cuando el usuario las aprueba.
+
+### Reglas generales del rol mentor
+
+- Identificadores de código (variables, funciones, tablas, campos, rutas) en **inglés**.
+- Textos visibles en la UI en **español** (Rioplatense voseo cuando aplica el tono cálido).
+- Tailwind puro — sin shadcn/ui, sin Headless UI, sin Radix. Componentes accesibles construidos a mano. Patrones de referencia en `frontend/src/components/confirm-dialog.tsx`, `action-menu.tsx`, `mobile-drawer.tsx` (todos usan `frontend/src/hooks/use-focus-trap.ts`).
+- JWT del backend lleva datos estáticos del usuario (`id`, `email`, `name`). NO crear `/auth/me` para datos estáticos; sólo cuando se necesiten datos que cambian entre requests.
+- Conventional Commits siempre. Nunca `Co-Authored-By` ni atribución a IA.
+
+## Skill Registry y memoria
+
+- **`.atl/skill-registry.md`** — registro de skills disponibles + convenciones del proyecto. Lo leen los orquestadores antes de delegar a sub-agentes para inyectar reglas compactas en sus prompts.
+- **Engram** — backend de memoria persistente entre sesiones. Las decisiones, descubrimientos y artefactos SDD se guardan ahí proactivamente con `mem_save`. Topic keys de SDD: `sdd-init/sbkacademy`, `sdd/sbkacademy/testing-capabilities`, `sdd/<change>/explore|proposal|spec|design|tasks|apply-progress|verify-report|archive-report`.
+- **`memory/MEMORY.md`** (en `~/.claude/projects/`) — auto-memoria local del usuario con preferencias y contexto del proyecto.
