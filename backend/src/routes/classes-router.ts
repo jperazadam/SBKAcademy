@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { requireAuth } from '../middleware/require-auth'
+import { requireRole } from '../middleware/require-role'
 import {
   listClasses,
   getClass,
@@ -10,8 +11,8 @@ import {
 
 const router = Router()
 
-// All class routes require authentication
-router.use(requireAuth)
+// All class routes require authentication AND professor role — REQ-13
+router.use(requireAuth, requireRole('professor'))
 
 // GET /classes — list all active classes for the authenticated teacher
 router.get('/', listClasses)

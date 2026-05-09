@@ -24,7 +24,7 @@ beforeAll(async () => {
   await cleanupOwnRows()
   const passwordHash = await bcrypt.hash(TEST_PASSWORD, 10)
   await prisma.user.create({
-    data: { email: TEST_EMAIL, password: passwordHash, name: TEST_NAME },
+    data: { email: TEST_EMAIL, password: passwordHash, name: TEST_NAME, role: 'professor' },
   })
 })
 
@@ -48,12 +48,13 @@ describe('POST /auth/login', () => {
     expect(res.body.user).toMatchObject({
       email: TEST_EMAIL,
       name: TEST_NAME,
+      role: 'professor',
     })
     // password must never appear in the response
     expect(res.body.user.password).toBeUndefined()
   })
 
-  it('JWT payload contains id, email and name', async () => {
+  it('JWT payload contains id, email, name and role', async () => {
     const res = await request(app)
       .post('/auth/login')
       .send({ email: TEST_EMAIL, password: TEST_PASSWORD })
@@ -69,6 +70,7 @@ describe('POST /auth/login', () => {
     expect(payload.id).toBeDefined()
     expect(payload.email).toBe(TEST_EMAIL)
     expect(payload.name).toBe(TEST_NAME)
+    expect(payload.role).toBe('professor')
   })
 
   it('returns 401 on wrong password', async () => {
@@ -77,7 +79,7 @@ describe('POST /auth/login', () => {
       .send({ email: TEST_EMAIL, password: 'wrong-password' })
 
     expect(res.status).toBe(401)
-    expect(res.body.error).toBe('Invalid credentials')
+    expect(res.body.error).toBe('Email o contraseña incorrectos.')
   })
 
   it('returns 401 on non-existent email', async () => {
@@ -86,7 +88,7 @@ describe('POST /auth/login', () => {
       .send({ email: 'nobody@example.com', password: TEST_PASSWORD })
 
     expect(res.status).toBe(401)
-    expect(res.body.error).toBe('Invalid credentials')
+    expect(res.body.error).toBe('Email o contraseña incorrectos.')
   })
 
   it('returns 400 when email is missing', async () => {
@@ -105,5 +107,78 @@ describe('POST /auth/login', () => {
 
     expect(res.status).toBe(400)
     expect(res.body.error).toContain('password')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// POST /auth/register
+// ---------------------------------------------------------------------------
+
+describe('POST /auth/register', () => {
+  it('returns 201 with token and user object when registering as professor', async () => {
+    const email = `newprof${EMAIL_SUFFIX}`
+    const res = await request(app)
+      .post('/auth/register')
+      .send({ email, password: 'securepassword', name: 'New Prof', role: 'professor' })
+
+    expect(res.status).toBe(201)
+    expect(res.body.token).toBeDefined()
+    expect(res.body.user).toMatchObject({
+      email,
+      name: 'New Prof',
+      role: 'professor',
+    })
+    expect(res.body.user.password).toBeUndefined()
+    expect(res.body.user.id).toBeDefined()
+  })
+
+  it('returns 201 with token and user object when registering as student', async () => {
+    const email = `newstud${EMAIL_SUFFIX}`
+    const res = await request(app)
+      .post('/auth/register')
+      .send({ email, password: 'securepassword', name: 'New Student', role: 'student' })
+
+    expect(res.status).toBe(201)
+    expect(res.body.token).toBeDefined()
+    expect(res.body.user).toMatchObject({
+      email,
+      name: 'New Student',
+      role: 'student',
+    })
+  })
+
+  it('returns 409 when email already exists', async () => {
+    const res = await request(app)
+      .post('/auth/register')
+      .send({ email: TEST_EMAIL, password: 'securepassword', name: 'Duplicate', role: 'professor' })
+
+    expect(res.status).toBe(409)
+    expect(res.body.error).toBe('Ya existe una cuenta con ese email.')
+  })
+
+  it('returns 400 when password is shorter than 8 characters', async () => {
+    const res = await request(app)
+      .post('/auth/register')
+      .send({ email: `short${EMAIL_SUFFIX}`, password: 'abc123', name: 'Short Pass', role: 'professor' })
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBeDefined()
+  })
+
+  it('returns 400 when required fields are missing', async () => {
+    const res = await request(app)
+      .post('/auth/register')
+      .send({ email: `missing${EMAIL_SUFFIX}`, password: 'password123' })
+    // missing name and role
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 when role is invalid', async () => {
+    const res = await request(app)
+      .post('/auth/register')
+      .send({ email: `badrole${EMAIL_SUFFIX}`, password: 'password123', name: 'Bad Role', role: 'admin' })
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBeDefined()
   })
 })

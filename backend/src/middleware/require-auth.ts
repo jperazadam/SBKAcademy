@@ -1,11 +1,13 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
+import { Role } from '@prisma/client'
 
 // Shape of the data we embed inside the JWT payload.
 interface JwtPayload {
   id: number
   email: string
   name: string
+  role: Role
 }
 
 /**
@@ -42,6 +44,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
       id: payload.id,
       email: payload.email,
       name: payload.name,
+      role: payload.role,
     }
 
     next()

@@ -5,6 +5,8 @@
 // makes the Express namespace augmentation reliable for ts-node-dev,
 // tsc, and Vitest.
 
+import type { Role } from '@prisma/client'
+
 export {}
 
 declare global {
@@ -14,6 +16,7 @@ declare global {
         id: number
         email: string
         name: string
+        role: Role
       }
     }
   }

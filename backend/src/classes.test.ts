@@ -13,6 +13,7 @@ const prisma = new PrismaClient()
 
 let teacherA: { id: number; token: string }
 let teacherB: { id: number; token: string }
+let studentUser: { id: number; token: string }
 
 // Unique email suffix per test process — prevents collisions when this file
 // runs in parallel with other test files against the same database, and avoids
@@ -20,16 +21,16 @@ let teacherB: { id: number; token: string }
 const RUN_ID = `${Date.now()}-${Math.floor(Math.random() * 1e9)}`
 const EMAIL_SUFFIX = `@classes-${RUN_ID}.test.local`
 
-function makeToken(user: { id: number; email: string; name: string }): string {
+function makeToken(user: { id: number; email: string; name: string; role: 'professor' | 'student' }): string {
   return jwt.sign(
-    { id: user.id, email: user.email, name: user.name },
+    { id: user.id, email: user.email, name: user.name, role: user.role },
     process.env.JWT_SECRET as string,
     { expiresIn: '1h' }
   )
 }
 
 // Scoped cleanup — only touches rows owned by teachers created in THIS file.
-// Order respects FK dependencies: schedules → classes → students → users.
+// Order respects FK dependencies: schedules → classes → users.
 // Never uses unscoped deleteMany, which would race with other test files
 // that share the same database.
 async function cleanupOwnRows() {
@@ -37,9 +38,6 @@ async function cleanupOwnRows() {
     where: { class: { teacher: { email: { endsWith: EMAIL_SUFFIX } } } },
   })
   await prisma.danceClass.deleteMany({
-    where: { teacher: { email: { endsWith: EMAIL_SUFFIX } } },
-  })
-  await prisma.student.deleteMany({
     where: { teacher: { email: { endsWith: EMAIL_SUFFIX } } },
   })
   await prisma.user.deleteMany({
@@ -57,14 +55,18 @@ beforeAll(async () => {
   const passwordHash = await bcrypt.hash('password123', 10)
 
   const userA = await prisma.user.create({
-    data: { email: `teacher-a${EMAIL_SUFFIX}`, password: passwordHash, name: 'Teacher A (classes)' },
+    data: { email: `teacher-a${EMAIL_SUFFIX}`, password: passwordHash, name: 'Teacher A (classes)', role: 'professor' },
   })
   const userB = await prisma.user.create({
-    data: { email: `teacher-b${EMAIL_SUFFIX}`, password: passwordHash, name: 'Teacher B (classes)' },
+    data: { email: `teacher-b${EMAIL_SUFFIX}`, password: passwordHash, name: 'Teacher B (classes)', role: 'professor' },
+  })
+  const studentRaw = await prisma.user.create({
+    data: { email: `student${EMAIL_SUFFIX}`, password: passwordHash, name: 'Student (classes)', role: 'student' },
   })
 
-  teacherA = { id: userA.id, token: makeToken(userA) }
-  teacherB = { id: userB.id, token: makeToken(userB) }
+  teacherA = { id: userA.id, token: makeToken({ ...userA, role: 'professor' }) }
+  teacherB = { id: userB.id, token: makeToken({ ...userB, role: 'professor' }) }
+  studentUser = { id: studentRaw.id, token: makeToken({ ...studentRaw, role: 'student' }) }
 })
 
 afterAll(async () => {
@@ -107,6 +109,30 @@ describe('Unauthenticated access returns 401', () => {
       expect(res.body).toEqual({ error: 'Unauthorized' })
     })
   }
+})
+
+// ---------------------------------------------------------------------------
+// Tests: 403 Student role access
+// REQ-13: /classes/* must require requireRole('professor')
+// ---------------------------------------------------------------------------
+
+describe('Student role gets 403 on professor-only routes', () => {
+  it('GET /classes with student token → 403', async () => {
+    const res = await request(app)
+      .get('/classes')
+      .set('Authorization', `Bearer ${studentUser.token}`)
+
+    expect(res.status).toBe(403)
+  })
+
+  it('POST /classes with student token → 403', async () => {
+    const res = await request(app)
+      .post('/classes')
+      .set('Authorization', `Bearer ${studentUser.token}`)
+      .send({ type: 'SALSA', level: 'MEDIO', schedules: [{ dayOfWeek: 1, startTime: '18:00', endTime: '19:30' }] })
+
+    expect(res.status).toBe(403)
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -297,7 +323,7 @@ describe('GET /classes', () => {
   })
 
   it('returns only active classes owned by the teacher', async () => {
-    const active = await prisma.danceClass.create({
+    await prisma.danceClass.create({
       data: {
         type: 'SALSA',
         level: 'MEDIO',

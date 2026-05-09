@@ -1,31 +1,16 @@
 import { Router } from 'express'
 import { requireAuth } from '../middleware/require-auth'
-import {
-  listStudents,
-  getStudent,
-  createStudent,
-  updateStudent,
-  deleteStudent,
-} from '../controllers/students-controller'
+import { requireRole } from '../middleware/require-role'
+import { listStudents } from '../controllers/students-controller'
 
 const router = Router()
 
-// All student routes require authentication
-router.use(requireAuth)
+// All student routes require authentication AND professor role.
+// Student mutations (POST/PUT/DELETE) are removed — REQ-11.
+router.use(requireAuth, requireRole('professor'))
 
-// GET /students — list all active students for the authenticated teacher
+// GET /students — list students for authenticated professor
+// Returns [] for now (no enrollment feature yet) — REQ-12
 router.get('/', listStudents)
-
-// POST /students — create a new student
-router.post('/', createStudent)
-
-// GET /students/:id — get a single student (only if owned by teacher and active)
-router.get('/:id', getStudent)
-
-// PUT /students/:id — update a student's fields (only if owned by teacher and active)
-router.put('/:id', updateStudent)
-
-// DELETE /students/:id — soft-delete (set active=false)
-router.delete('/:id', deleteStudent)
 
 export default router
