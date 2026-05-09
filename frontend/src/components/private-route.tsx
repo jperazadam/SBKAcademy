@@ -1,25 +1,35 @@
-import { Navigate } from 'react-router-dom'
+import { Navigate, type ReactNode } from 'react-router-dom'
+import { useAuth } from '../context/auth-context'
 
 interface PrivateRouteProps {
-  children: React.ReactNode
+  children: ReactNode
 }
 
 /**
  * Protege rutas que requieren sesión activa.
  *
- * Lee el token de localStorage de forma síncrona — no hace ninguna llamada
- * a la API. La validez real del token la comprueba el backend; si el token
- * existe pero ha expirado, el interceptor de response en api.ts detectará
- * el 401 y redirigirá al login en ese momento.
+ * Lee el estado de autenticación desde AuthContext — la única fuente de
+ * verdad en runtime. El contexto hidrata desde localStorage en el montaje
+ * inicial, así que esta comprobación es síncrona y no requiere una llamada
+ * a la API.
  *
  * Se usa <Navigate replace> en lugar de <Navigate> para que la ruta
  * protegida no quede en el historial del navegador: si el usuario pulsa
  * "atrás" desde el login no vuelve a una pantalla que no puede ver.
+ *
+ * Nota: si `isLoading` llegara a ser true (actualmente siempre es false
+ * porque la hidratación es síncrona), no redirigimos — esperamos a que
+ * el contexto resuelva antes de decidir.
  */
 function PrivateRoute({ children }: PrivateRouteProps) {
-  const token = localStorage.getItem('token')
+  const { isAuthenticated, isLoading } = useAuth()
 
-  if (!token) {
+  if (isLoading) {
+    // Loading state: don't redirect while context is initializing
+    return null
+  }
+
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />
   }
 

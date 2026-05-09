@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { login } from '../services/auth-service'
+import { useAuth } from '../context/auth-context'
 
 function LoginPage() {
   const [email, setEmail] = useState('')
@@ -9,6 +10,7 @@ function LoginPage() {
   const [errorMessage, setErrorMessage] = useState('')
 
   const navigate = useNavigate()
+  const auth = useAuth()
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -17,8 +19,8 @@ function LoginPage() {
 
     try {
       const response = await login({ email, password })
-      localStorage.setItem('token', response.token)
-      navigate('/dashboard')
+      auth.login(response.token)
+      navigate(response.user.role === 'professor' ? '/dashboard' : '/portal')
     } catch {
       setErrorMessage('Correo o contraseña incorrectos. Inténtalo de nuevo.')
     } finally {
@@ -126,6 +128,18 @@ function LoginPage() {
           >
             {isLoading ? 'Iniciando sesión...' : 'Iniciar sesión'}
           </button>
+
+          {/* Link al registro */}
+          <p className="text-center text-sm text-foreground/60">
+            ¿No tenés cuenta?{' '}
+            <Link
+              to="/registro"
+              className="text-primary-600 hover:text-primary-700 font-semibold
+                         focus-visible:outline-none focus-visible:underline"
+            >
+              Registrate
+            </Link>
+          </p>
 
         </form>
       </div>
