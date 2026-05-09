@@ -22,7 +22,7 @@ function LoginPage() {
       auth.login(response.token)
       navigate(response.user.role === 'professor' ? '/dashboard' : '/portal')
     } catch {
-      setErrorMessage('Correo o contraseña incorrectos. Inténtalo de nuevo.')
+      setErrorMessage('Email o contraseña incorrectos.')
     } finally {
       setIsLoading(false)
     }

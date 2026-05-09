@@ -14,8 +14,8 @@ import StudentLayout from './layouts/student-layout'
 function App() {
   return (
     /*
-     * AuthProvider wraps BrowserRouter so that RoleRoute and PrivateRoute
-     * can access useAuth() at any nesting level. Placing it here (inside App,
+     * AuthProvider wraps BrowserRouter so that RoleRoute can access
+     * useAuth() at any nesting level. Placing it here (inside App,
      * above BrowserRouter) keeps main.tsx minimal.
      */
     <AuthProvider>
