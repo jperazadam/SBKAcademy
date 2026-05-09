@@ -16,13 +16,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { useFocusTrap } from '../hooks/use-focus-trap'
 import SidebarNav from './sidebar-nav'
+import type { NavItem } from './sidebar-nav'
 
 interface MobileDrawerProps {
   open: boolean
   onClose: () => void
+  /** Override the default professor nav items with custom items (e.g. student nav). */
+  navItems?: NavItem[]
 }
 
-export default function MobileDrawer({ open, onClose }: MobileDrawerProps) {
+export default function MobileDrawer({ open, onClose, navItems }: MobileDrawerProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   // Controls CSS transitions: false = estado inicial oculto, true = estado final visible
   const [visible, setVisible] = useState(false)
@@ -115,7 +118,7 @@ export default function MobileDrawer({ open, onClose }: MobileDrawerProps) {
 
         {/* Navegación: onNavigate cierra el drawer al hacer click en un NavLink */}
         <div className="flex-1 overflow-y-auto">
-          <SidebarNav onNavigate={onClose} />
+          <SidebarNav onNavigate={onClose} items={navItems} />
         </div>
       </div>
     </div>

@@ -10,24 +10,26 @@
  */
 import { NavLink, useNavigate } from 'react-router-dom'
 
-interface SidebarNavProps {
-  onNavigate?: () => void
-}
-
-interface NavItem {
+export interface NavItem {
   to: string
   label: string
   end?: boolean
 }
 
-const NAV_ITEMS: NavItem[] = [
+interface SidebarNavProps {
+  onNavigate?: () => void
+  items?: NavItem[]
+}
+
+const DEFAULT_NAV_ITEMS: NavItem[] = [
   { to: '/dashboard', label: 'Inicio', end: true },
   { to: '/dashboard/students', label: 'Alumnos' },
   { to: '/dashboard/classes', label: 'Clases' },
 ]
 
-export default function SidebarNav({ onNavigate }: SidebarNavProps) {
+export default function SidebarNav({ onNavigate, items }: SidebarNavProps) {
   const navigate = useNavigate()
+  const navItems = items ?? DEFAULT_NAV_ITEMS
 
   function handleLogout() {
     // Si el drawer llama esto, cerrarlo primero para evitar que el focus trap
@@ -41,7 +43,7 @@ export default function SidebarNav({ onNavigate }: SidebarNavProps) {
     <div className="flex h-full flex-col">
       {/* Nav links */}
       <nav className="flex-1 space-y-1 px-3 py-2" aria-label="Navegación principal">
-        {NAV_ITEMS.map((item) => (
+        {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}

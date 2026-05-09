@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import MetricCard from '../components/metric-card'
-import { decodeJwt } from '../utils/decode-jwt'
+import { useAuth } from '../context/auth-context'
 import { listStudents } from '../services/students-service'
 import { listClasses } from '../services/classes-service'
 import { upcomingOccurrences } from '../utils/upcoming-classes'
@@ -31,16 +31,15 @@ function formatRange(occurrence: UpcomingOccurrence): string {
 
 function DashboardPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   const [students, setStudents] = useState<Student[]>([])
   const [classes, setClasses] = useState<DanceClass[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Decode teacher name from JWT — no network call needed
-  const token = localStorage.getItem('token') ?? ''
-  const payload = decodeJwt(token)
-  const teacherName = payload?.name ?? ''
+  // Read teacher name from AuthContext — single source of truth, no localStorage access
+  const teacherName = user?.name ?? ''
 
   const today = new Date().toLocaleDateString('es-ES', {
     weekday: 'long',

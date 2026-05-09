@@ -1,6 +1,9 @@
 /**
- * Student DTO types matching the backend API contract.
+ * Student DTO matching the backend API contract.
  * UI text is in Spanish; code identifiers are in English.
+ *
+ * Form input types (CreateStudentInput, UpdateStudentInput) removed — student
+ * creation and editing is not part of this version of the app (REQ-21).
  */
 
 export interface Student {
@@ -13,22 +16,4 @@ export interface Student {
   active: boolean
   createdAt: string
   updatedAt: string
-}
-
-export interface CreateStudentInput {
-  firstName: string
-  lastName: string
-  phone: string
-  email?: string
-}
-
-export interface UpdateStudentInput {
-  firstName: string
-  lastName: string
-  phone: string
-  email?: string
-}
-
-export interface StudentError {
-  error: string
 }

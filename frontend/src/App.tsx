@@ -1,49 +1,72 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider } from './context/auth-context'
 import LoginPage from './pages/login-page'
+import RegisterPage from './pages/register-page'
 import DashboardPage from './pages/dashboard-page'
 import StudentsPage from './pages/students-page'
-import StudentFormPage from './pages/student-form-page'
 import ClassesPage from './pages/classes-page'
 import ClassFormPage from './pages/class-form-page'
-import PrivateRoute from './components/private-route'
+import StudentHomePage from './pages/student-home-page'
+import RoleRoute from './components/role-route'
 import AppLayout from './components/app-layout'
+import StudentLayout from './layouts/student-layout'
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
+    /*
+     * AuthProvider wraps BrowserRouter so that RoleRoute and PrivateRoute
+     * can access useAuth() at any nesting level. Placing it here (inside App,
+     * above BrowserRouter) keeps main.tsx minimal.
+     */
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/registro" element={<RegisterPage />} />
 
-        {/*
-          Todas las rutas privadas anidadas bajo un único wrapper.
-          PrivateRoute verifica el token; AppLayout provee el shell persistente.
-          <Outlet /> en AppLayout renderiza la ruta hija activa.
-        */}
-        <Route
-          element={
-            <PrivateRoute>
-              <AppLayout />
-            </PrivateRoute>
-          }
-        >
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/dashboard/students" element={<StudentsPage />} />
-          <Route path="/dashboard/students/new" element={<StudentFormPage mode="create" />} />
+          {/*
+           * Professor routes — protected by RoleRoute(professor).
+           * A student navigating here is redirected to /portal.
+           * An unauthenticated user is redirected to /login.
+           */}
           <Route
-            path="/dashboard/students/:studentId/edit"
-            element={<StudentFormPage mode="edit" />}
-          />
-          <Route path="/dashboard/classes" element={<ClassesPage />} />
-          <Route path="/dashboard/classes/new" element={<ClassFormPage mode="create" />} />
-          <Route
-            path="/dashboard/classes/:classId/edit"
-            element={<ClassFormPage mode="edit" />}
-          />
-        </Route>
+            element={
+              <RoleRoute allow="professor">
+                <AppLayout />
+              </RoleRoute>
+            }
+          >
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/dashboard/students" element={<StudentsPage />} />
+            <Route path="/dashboard/classes" element={<ClassesPage />} />
+            <Route path="/dashboard/classes/new" element={<ClassFormPage mode="create" />} />
+            <Route
+              path="/dashboard/classes/:classId/edit"
+              element={<ClassFormPage mode="edit" />}
+            />
+          </Route>
 
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </BrowserRouter>
+          {/*
+           * Student routes — protected by RoleRoute(student).
+           * A professor navigating here is redirected to /dashboard.
+           * An unauthenticated user is redirected to /login.
+           */}
+          <Route
+            element={
+              <RoleRoute allow="student">
+                <StudentLayout />
+              </RoleRoute>
+            }
+          >
+            <Route path="/portal" element={<StudentHomePage />} />
+          </Route>
+
+          {/* Fallback: anything else → /login */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }
 
