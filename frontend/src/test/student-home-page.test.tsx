@@ -8,10 +8,20 @@ import StudentHomePage from '../pages/student-home-page'
 /**
  * Builds a minimal JWT with the given payload.
  * Only the payload segment matters — decode-jwt reads the middle part only.
+ *
+ * Payload is encoded as UTF-8 bytes before base64 to match what the backend
+ * does with `jsonwebtoken`. btoa() on its own would silently use Latin-1 and
+ * break multi-byte characters (accents, ñ).
  */
 function buildToken(payload: Record<string, unknown>): string {
-  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
-  const body = btoa(JSON.stringify(payload))
+  const encode = (obj: unknown): string => {
+    const bytes = new TextEncoder().encode(JSON.stringify(obj))
+    let binary = ''
+    for (const b of bytes) binary += String.fromCharCode(b)
+    return btoa(binary)
+  }
+  const header = encode({ alg: 'HS256', typ: 'JWT' })
+  const body = encode(payload)
   return `${header}.${body}.fakesig`
 }
 

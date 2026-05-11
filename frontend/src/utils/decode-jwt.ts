@@ -29,7 +29,12 @@ export function decodeJwt(token: string): JwtPayload | null {
 
     // atob decodes base64url — replace URL-safe chars before decoding
     const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
-    const json = atob(base64)
+    // atob yields a binary string (1 char = 1 byte). The backend emits the
+    // payload as UTF-8, so we re-interpret the bytes via TextDecoder to
+    // preserve multi-byte characters (accents, ñ, etc.).
+    const binary = atob(base64)
+    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0))
+    const json = new TextDecoder('utf-8').decode(bytes)
     const payload = JSON.parse(json)
 
     // Reject legacy tokens that have no role field
